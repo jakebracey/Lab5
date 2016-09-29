@@ -8,6 +8,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
+int isNumeric (const char * s);
 int *load_array(char* file, int* length, int* max_val);
 double *do_offset(int* array, int* length, char*file);
 double *do_scale(int* array, int* length, char*file);
@@ -17,8 +19,8 @@ void write_stats(char[], int[], int*);
 void do_center(int[], int*, char*);
 void do_normal(int[], int*, char*);
 
-int main(void) {
-	int file_sel;
+int main(int argc, char *argv[]) {
+	int file_sel=0;
 	int* length = malloc(sizeof(int));
 	int* max_val = malloc(sizeof(int));
 	
@@ -30,6 +32,88 @@ int main(void) {
 	char center_file[22];
 	char normal_file[23];
 	
+	int i=1;
+	int n_flag=0;
+	int o_flag=0;
+	int s_flag=0;
+	int S_flag=0;
+	int C_flag=0;
+	int N_flag=0;
+	int r_flag=0;
+	int h_flag=0;
+	double offset_val,scale_val;
+	char* ptr_1;
+	char* new_file_name;
+	
+	while(i<argc){
+		if(argv[i][0]=='-' && argv[i][1]=='f'){
+			if(isNumeric(argv[i+1])==0){
+				n_flag=0;
+			}
+			else{
+				file_sel=atoi(argv[i+1]);
+				n_flag=1;
+				i++;
+			}
+		}
+		else if(argv[i][0]=='-' && argv[i][1]=='o'){
+				if(isNumeric(argv[i+1])==0){
+				o_flag=0;
+				}
+				else{
+				offset_val=strtod(argv[i+1],&ptr_1);
+				i++;
+				}
+			
+		}
+		else if(argv[i][0]=='-' && argv[i][1]=='s'){
+				if(isNumeric(argv[i+1])==0){
+				s_flag=0;
+				}
+				else{
+				scale_val=strtod(argv[i+1],&ptr_1);
+				i++;
+				}
+			
+		}
+		else if(argv[i][0]=='-' && argv[i][1]=='S'){
+				S_flag=1;	
+		}
+		else if(argv[i][0]=='-' && argv[i][1]=='C'){
+				C_flag=1;				
+		}
+		else if(argv[i][0]=='-' && argv[i][1]=='N'){
+				N_flag=1;	
+		}
+		else if(argv[i][0]=='-' && argv[i][1]=='r'){
+				if(i<argc){
+				i++;
+				new_file_name=malloc(sizeof(argv[i]+4));
+				sprintf(new_file_name,"%s.txt",argv[i]);
+				r_flag=1;
+				}
+				else
+					r_flag=-1;
+		}
+		else if(argv[i][0]=='-' && argv[i][1]=='h'){
+				h_flag=1;
+				printf("Thankyou for asking for help\n\nYou have the following options to put in your command line:\n-n <File Number>	Selects the file number which you would like to open\n-o <Offset Value>	Lets you instruct the program to offset the data and lets you offset it by the value you choose\n-s <Scale Factor>	Lets you instruct the program to scale the data and lets you scale it by the value you choose\n-S	Lets you instruct the program to get the statistics from the data\n-C	Lets you instruct the program to Center the data points\n-N	Lets you instruct the program to Normalize the data points\n-r <NewName>	Lets you create a copy of the input file you select and then formats the output files to this name\n-h	Lets you display the help menu\n\nThe following are example calls\n./a.exe -f 2 -o 43 -S\n./a.exe -f 2 -s -2.5 -C\n./a.exe -f 11 -r NewName1 -N\n\nSince you obviously needed help we are terminating the program with no output\n");
+				return 0;
+		}
+	i++;
+	}
+	printf("%d\n",file_sel);
+	printf("%lf",offset_val);
+	printf("%s",new_file_name);
+	/*
+	
+	
+	
+	
+	
+	
+	
+	
 	//defines strings for our data 
 	int* array;
 	double* array_changed;
@@ -40,8 +124,8 @@ int main(void) {
 	//gets file choice from user
 	printf("Which file would you like to open:\n");
 	scanf("%d", &file_sel);
-	if (file_sel < 1 || file_sel > 11) {
-		while (file_sel < 1 || file_sel > 11) {
+	if (file_sel < 1 || file_sel > 15) {
+		while (file_sel < 1 || file_sel > 15) {
 			printf("Available files are files 1-11\nPlease enter a valid file number:\n");
 			scanf("%d", &file_sel);
 		}
@@ -89,8 +173,10 @@ int main(void) {
 	//frees the memory we allocated for our strings. 
 	free(array);
 	free(array_changed);
-
+*/
 } //end of main
+
+
 
 double *do_offset(int* array, int* length, char* file) {
 	//function to offset all of the data points
@@ -262,4 +348,12 @@ void write_stats(char* file, int array[], int* length) {
 	fprintf(fp, "%.02f %d", getmean(array, length), getmax(array, length)); //writes to file
 	fclose(fp);
 	return;
+}
+int isNumeric (const char * s)
+{
+    if (s == NULL || *s == '\0' || isspace(*s))
+      return 0;
+    char * p;
+    strtod (s, &p);
+    return *p == '\0';
 }

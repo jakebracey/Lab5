@@ -9,10 +9,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <io.h>
+#include <conio.h>
+#include <string.h>
+
 int isNumeric (const char * s);
 int *load_array(char* file, int* length, int* max_val);
-double *do_offset(int* array, int* length, char*file);
-double *do_scale(int* array, int* length, char*file);
+void do_offset(int* array, int* length, char*file, double val);
+void do_scale(int* array, int* length, char*file,double val);
 double getmean(int[], int*);
 int getmax(int[], int*);
 void write_stats(char[], int[], int*);
@@ -25,12 +29,13 @@ int main(int argc, char *argv[]) {
 	int* max_val = malloc(sizeof(int));
 	
 	//defines all of our file name strings
-	char file_name[16];
-	char stat_file[23];
-	char offset_file[19];
-	char scaled_file[19];
-	char center_file[22];
-	char normal_file[23];
+	char file_name[66];
+	char stat_file[73];
+	char offset_file[69];
+	char scaled_file[69];
+	char center_file[72];
+	char normal_file[73];
+	char temp_file_name[16];
 	
 	int i=1;
 	int n_flag=0;
@@ -43,12 +48,16 @@ int main(int argc, char *argv[]) {
 	int h_flag=0;
 	double offset_val,scale_val;
 	char* ptr_1;
-	char* new_file_name;
+	char* new_name;
+	int scale_result=0;
+	int offset_result=0;
+	
 	
 	while(i<argc){
-		if(argv[i][0]=='-' && argv[i][1]=='f'){
+		if(argv[i][0]=='-' && argv[i][1]=='n'){
 			if(isNumeric(argv[i+1])==0){
-				n_flag=0;
+				n_flag=-1;
+				goto print_outs;
 			}
 			else{
 				file_sel=atoi(argv[i+1]);
@@ -58,21 +67,23 @@ int main(int argc, char *argv[]) {
 		}
 		else if(argv[i][0]=='-' && argv[i][1]=='o'){
 				if(isNumeric(argv[i+1])==0){
-				o_flag=0;
+				o_flag=-1;
 				}
 				else{
 				offset_val=strtod(argv[i+1],&ptr_1);
 				i++;
+				o_flag=1;
 				}
 			
 		}
 		else if(argv[i][0]=='-' && argv[i][1]=='s'){
 				if(isNumeric(argv[i+1])==0){
-				s_flag=0;
+				s_flag=-1;
 				}
 				else{
 				scale_val=strtod(argv[i+1],&ptr_1);
 				i++;
+				s_flag=1;
 				}
 			
 		}
@@ -86,10 +97,11 @@ int main(int argc, char *argv[]) {
 				N_flag=1;	
 		}
 		else if(argv[i][0]=='-' && argv[i][1]=='r'){
-				if(i<argc){
 				i++;
-				new_file_name=malloc(sizeof(argv[i]+4));
-				sprintf(new_file_name,"%s.txt",argv[i]);
+				if(i<argc){
+				
+				new_name=malloc(sizeof(argv[i]+4));
+				sprintf(new_name,"%s",argv[i]);
 				r_flag=1;
 				}
 				else
@@ -102,88 +114,117 @@ int main(int argc, char *argv[]) {
 		}
 	i++;
 	}
-	printf("%d\n",file_sel);
-	printf("%lf",offset_val);
-	printf("%s",new_file_name);
-	/*
-	
-	
-	
-	
-	
-	
-	
+	printf("file_sel%d\n",file_sel);
+	printf("offset_val%lf\n",offset_val);
+	//printf("new_file_name%s",new_file_name);
+	printf("scale_val%lf\n",scale_val);
+	printf("n:%d o:%d s:%d S:%d C:%d N:%d r:%d",n_flag,o_flag,s_flag,S_flag,C_flag,N_flag,r_flag);
 	
 	//defines strings for our data 
 	int* array;
 	double* array_changed;
 	
-	//variable to choose which operation to do on the input data
-	int off_or_scale;
-
-	//gets file choice from user
-	printf("Which file would you like to open:\n");
-	scanf("%d", &file_sel);
-	if (file_sel < 1 || file_sel > 15) {
-		while (file_sel < 1 || file_sel > 15) {
-			printf("Available files are files 1-11\nPlease enter a valid file number:\n");
-			scanf("%d", &file_sel);
-		}
+	if(n_flag!=1){
+		goto print_outs;
 	}
-
+	
+	if(r_flag!=1){
+	//this is run if no filename was selected to be renamed
 	//actually creates the file names to be used
-	if (file_sel < 10) {
+		if (file_sel < 10) {
 		sprintf(file_name, "Raw_data_0%d.txt", file_sel);
 		sprintf(stat_file, "Statistics_data_0%d.txt", file_sel);
 		sprintf(offset_file, "Offset_data_0%d.txt", file_sel);
 		sprintf(scaled_file, "Scaled_data_0%d.txt", file_sel);
 		sprintf(center_file, "Centered_data_0%d.txt", file_sel);
 		sprintf(normal_file, "Normalized_data_0%d.txt", file_sel);
-	} else {
+		} 
+		else {
 		sprintf(file_name, "Raw_data_%d.txt", file_sel);
 		sprintf(stat_file, "Statistics_data_%d.txt", file_sel);
 		sprintf(offset_file, "Offset_data_%d.txt", file_sel);
 		sprintf(scaled_file, "Scaled_data_%d.txt", file_sel);
 		sprintf(center_file, "Centered_data_%d.txt", file_sel);
 		sprintf(normal_file, "Normalized_data_%d.txt", file_sel);
+		}
 	}
+	else{
+	//this is run if a new filename was selected	
+		if (file_sel < 10)
+		sprintf(temp_file_name, "Raw_data_0%d.txt", file_sel);
+		else
+		sprintf(temp_file_name, "Raw_data_%d.txt", file_sel);
+		
+		sprintf(file_name, "%s.txt", new_name);
+		sprintf(stat_file, "%s_Statistics.txt", new_name);
+		sprintf(offset_file, "%s_Offset.txt", new_name);
+		sprintf(scaled_file, "%s_Scaled.txt", new_name);
+		sprintf(center_file, "%s_Centered.txt", new_name);
+		sprintf(normal_file, "%s_Normal.txt", new_name);
+	
+	FILE* fpd = fopen(file_name, "w");
+	//opens the given output file for writing
+	if (fpd == NULL) //making sure the output file exists
+		freopen(file_name, "w", fpd);
+	
+	FILE* fps = fopen(temp_file_name, "r");
+	//opens the given input file for reading
+	if (fps == NULL) //making sure the input file exists
+		freopen(file_name, "w", fps);
+	
+	char ch;
+	while((ch=getc(fps))!=EOF)
+	putc(ch,fpd);
+	fclose(fpd);
+	fclose(fps);
+	
+	}//end of else for the rename part
 
 	//loads the array from the input file
 	array = load_array(file_name, length, max_val);
 
-	//part of code to either offset or scale
-	printf("Enter if you would like to\n(1) Offset the original signal\n(2) Scale the original signal\n");
-	scanf("%d", &off_or_scale);
-	if (off_or_scale < 1 || off_or_scale > 2) {
-		while (off_or_scale < 1 || off_or_scale > 2) {
-			printf("Enter if you would like to\n(1) Offset the original signal\n(2) Scale the original signal\n");
-			scanf("%d", &off_or_scale);
-		}
-	}
-	if (off_or_scale == 1) {//if they select 1 then the offset function is called
-		array_changed = do_offset(array, length, offset_file);
-	} else {//if they select 2 then the scale function is called
-		array_changed = do_scale(array, length, scaled_file);
+	
+	if (o_flag == 1) {//offset function is called if they enter -o as an argument
+		do_offset(array, length, offset_file,offset_val);
+	} 
+	if(s_flag == 1) {//scale function is called if they enter -s as an argument
+		do_scale(array, length, scaled_file,scale_val);
 	}
 
+	if(S_flag==1){
 	write_stats(stat_file, array, length); //writes stats to file, inside this function the average and max functions are called
+	}
+	
+	if(C_flag==1){
 	do_center(array, length, center_file); //writes centered values to file
+	}
+	
+	if(N_flag==1){
 	do_normal(array, length, normal_file); //writes normalized values to file
-
+	}
+print_outs:	
 	//frees the memory we allocated for our strings. 
 	free(array);
-	free(array_changed);
-*/
+	if(n_flag!=1)
+		printf("\nProgram did not receive a a file number to read from\n");
+	if(o_flag==-1)
+		printf("\nProgram did not receive a valid offset value from the user\nProgram was not able to perform this function\n");
+	if(s_flag==-1)
+		printf("\nProgram did not receive a valid scale value from the user\nProgram was not able to perform this function\n");
+	if(r_flag==-1)
+		printf("\nProgram could not find a new name to name the files\nAll other commands were executed using the default file name\n");
+	if(r_flag==-1||s_flag==-1||o_flag==-1||n_flag!=1){
+	printf("\n\n\nSince you had some trouble with the formatting we thought you might like some help\n\nYou have the following options to put in your command line:\n-n <File Number>	Selects the file number which you would like to open\n-o <Offset Value>	Lets you instruct the program to offset the data and lets you offset it by the value you choose\n-s <Scale Factor>	Lets you instruct the program to scale the data and lets you scale it by the value you choose\n-S	Lets you instruct the program to get the statistics from the data\n-C	Lets you instruct the program to Center the data points\n-N	Lets you instruct the program to Normalize the data points\n-r <NewName>	Lets you create a copy of the input file you select and then formats the output files to this name\n-h	Lets you display the help menu\n\nThe following are example calls\n./a.exe -f 2 -o 43 -S\n./a.exe -f 2 -s -2.5 -C\n./a.exe -f 11 -r NewName1 -N\n\nEven though you had some incorrect formatting we executed as many commands as possible\n");	
+	}
+	
+
 } //end of main
 
 
 
-double *do_offset(int* array, int* length, char* file) {
+void do_offset(int* array, int* length, char* file,double val) {
 	//function to offset all of the data points
-	double val;
 	double* array_changed = malloc(sizeof(double) * *length);//mallocs a string to put our altered values in
-	printf("Enter the factor that you would like to offset the data samples by:\n");
-	scanf("%lf", &val);
 	int i;
 	for (i = 0; i < *length; i++) {//goes through every term in the array
 		*(array_changed + i) = (double) (*(array + i) + val);//adds the value to every term
@@ -202,15 +243,12 @@ double *do_offset(int* array, int* length, char* file) {
 		fprintf(fp, "%.4lf\n", *(array_changed + i));
 	}
 	fclose(fp);
-	return array_changed;
+	return;
 }
 
-double *do_scale(int* array, int* length, char* file) {
+ void do_scale(int* array, int* length, char* file,double val) {
 	//funciton to scale all of the input data points
-	double val;
 	double* array_changed = malloc(sizeof(double) * *length);//mallocs a string to put our altered values in
-	printf("Enter the factor that you would like to scale the data samples by:\n");
-	scanf("%lf", &val);
 	int i;
 	for (i = 0; i < *length; i++) {
 		*(array_changed + i) = (double) (*(array + i) * val);
@@ -229,7 +267,8 @@ double *do_scale(int* array, int* length, char* file) {
 		fprintf(fp, "%.4lf\n", *(array_changed + i));
 	}
 	fclose(fp);
-	return array_changed;
+	
+	return;
 }
 
 void do_center(int array[], int* length, char* file)

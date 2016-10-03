@@ -37,6 +37,7 @@ int main(int argc, char *argv[]) {
 	char normal_file[73];
 	char temp_file_name[16];
 	
+	//defines the counter and all the flags for error checking
 	int i=1;
 	int n_flag=0;
 	int o_flag=0;
@@ -46,42 +47,41 @@ int main(int argc, char *argv[]) {
 	int N_flag=0;
 	int r_flag=0;
 	int h_flag=0;
-	double offset_val,scale_val;
-	char* ptr_1;
-	char* new_name;
-	int scale_result=0;
-	int offset_result=0;
 	
+	double offset_val,scale_val;//vlaues to store scale and offsets
+	char* ptr_1;//empty pointer needed for strtod to work
+	char* new_name;//pointer to hold the new file name from user if needed.
 	
+	//while loop that goes through all the command line arguments
 	while(i<argc){
 		if(argv[i][0]=='-' && argv[i][1]=='n'){
-			if(isNumeric(argv[i+1])==0){
+			if(isNumeric(argv[i+1])==0){//checks to make sure the value given is a number
 				n_flag=-1;
-				goto print_outs;
+				goto print_outs;//if the user doesn't give a file number no action can be taken so we go to help screen and print out message
 			}
 			else{
-				file_sel=atoi(argv[i+1]);
+				file_sel=atoi(argv[i+1]);//happens if user gives a valid input
 				n_flag=1;
 				i++;
 			}
 		}
 		else if(argv[i][0]=='-' && argv[i][1]=='o'){
-				if(isNumeric(argv[i+1])==0){
+				if(isNumeric(argv[i+1])==0){//checks to make sure the value given is a number
 				o_flag=-1;
 				}
 				else{
-				offset_val=strtod(argv[i+1],&ptr_1);
+				offset_val=strtod(argv[i+1],&ptr_1);//stores given value if it is a valid number
 				i++;
 				o_flag=1;
 				}
 			
 		}
 		else if(argv[i][0]=='-' && argv[i][1]=='s'){
-				if(isNumeric(argv[i+1])==0){
+				if(isNumeric(argv[i+1])==0){//checks to make sure the value given is a number
 				s_flag=-1;
 				}
 				else{
-				scale_val=strtod(argv[i+1],&ptr_1);
+				scale_val=strtod(argv[i+1],&ptr_1);//stores given value if it is a valid number
 				i++;
 				s_flag=1;
 				}
@@ -98,33 +98,30 @@ int main(int argc, char *argv[]) {
 		}
 		else if(argv[i][0]=='-' && argv[i][1]=='r'){
 				i++;
-				if(i<argc){
+				if(i<argc){//makes sure that there is something after the "-n". Failure to check for this could cause Segmentation Faults
 				
-				new_name=malloc(sizeof(argv[i]+4));
+				new_name=malloc(sizeof(argv[i]+4));//if all conditions are satisfied, the program mallocs memory and stores the given text
 				sprintf(new_name,"%s",argv[i]);
 				r_flag=1;
 				}
 				else
 					r_flag=-1;
 		}
-		else if(argv[i][0]=='-' && argv[i][1]=='h'){
+		else if(argv[i][0]=='-' && argv[i][1]=='h'){//help option
 				h_flag=1;
 				printf("Thankyou for asking for help\n\nYou have the following options to put in your command line:\n-n <File Number>	Selects the file number which you would like to open\n-o <Offset Value>	Lets you instruct the program to offset the data and lets you offset it by the value you choose\n-s <Scale Factor>	Lets you instruct the program to scale the data and lets you scale it by the value you choose\n-S	Lets you instruct the program to get the statistics from the data\n-C	Lets you instruct the program to Center the data points\n-N	Lets you instruct the program to Normalize the data points\n-r <NewName>	Lets you create a copy of the input file you select and then formats the output files to this name\n-h	Lets you display the help menu\n\nThe following are example calls\n./a.exe -f 2 -o 43 -S\n./a.exe -f 2 -s -2.5 -C\n./a.exe -f 11 -r NewName1 -N\n\nSince you obviously needed help we are terminating the program with no output\n");
 				return 0;
 		}
 	i++;
 	}
-	printf("file_sel%d\n",file_sel);
-	printf("offset_val%lf\n",offset_val);
-	//printf("new_file_name%s",new_file_name);
-	printf("scale_val%lf\n",scale_val);
-	printf("n:%d o:%d s:%d S:%d C:%d N:%d r:%d",n_flag,o_flag,s_flag,S_flag,C_flag,N_flag,r_flag);
+	//prints out flags for debugging
+	//printf("n:%d o:%d s:%d S:%d C:%d N:%d r:%d",n_flag,o_flag,s_flag,S_flag,C_flag,N_flag,r_flag);
 	
 	//defines strings for our data 
 	int* array;
 	double* array_changed;
 	
-	if(n_flag!=1){
+	if(n_flag!=1){//makes sure that the user gives a file number
 		goto print_outs;
 	}
 	
@@ -155,6 +152,7 @@ int main(int argc, char *argv[]) {
 		else
 		sprintf(temp_file_name, "Raw_data_%d.txt", file_sel);
 		
+		//creates the new file names to be used by the program
 		sprintf(file_name, "%s.txt", new_name);
 		sprintf(stat_file, "%s_Statistics.txt", new_name);
 		sprintf(offset_file, "%s_Offset.txt", new_name);
@@ -162,7 +160,7 @@ int main(int argc, char *argv[]) {
 		sprintf(center_file, "%s_Centered.txt", new_name);
 		sprintf(normal_file, "%s_Normal.txt", new_name);
 	
-	FILE* fpd = fopen(file_name, "w");
+	FILE* fpd = fopen(file_name, "w");//copies the data from the given file into the new filename that was selected by the user
 	//opens the given output file for writing
 	if (fpd == NULL) //making sure the output file exists
 		freopen(file_name, "w", fpd);
@@ -173,8 +171,10 @@ int main(int argc, char *argv[]) {
 		freopen(file_name, "w", fps);
 	
 	char ch;
-	while((ch=getc(fps))!=EOF)
-	putc(ch,fpd);
+	while((ch=getc(fps))!=EOF)//actually copies the data from the source file to the new file that the user determined the name of
+		putc(ch,fpd);
+	
+	//closing both files
 	fclose(fpd);
 	fclose(fps);
 	
@@ -203,8 +203,11 @@ int main(int argc, char *argv[]) {
 	do_normal(array, length, normal_file); //writes normalized values to file
 	}
 print_outs:	
+	
 	//frees the memory we allocated for our strings. 
 	free(array);
+	
+	//Prints out error message if certain user errors were made
 	if(n_flag!=1)
 		printf("\nProgram did not receive a a file number to read from\n");
 	if(o_flag==-1)
@@ -216,7 +219,7 @@ print_outs:
 	if(r_flag==-1||s_flag==-1||o_flag==-1||n_flag!=1){
 	printf("\n\n\nSince you had some trouble with the formatting we thought you might like some help\n\nYou have the following options to put in your command line:\n-n <File Number>	Selects the file number which you would like to open\n-o <Offset Value>	Lets you instruct the program to offset the data and lets you offset it by the value you choose\n-s <Scale Factor>	Lets you instruct the program to scale the data and lets you scale it by the value you choose\n-S	Lets you instruct the program to get the statistics from the data\n-C	Lets you instruct the program to Center the data points\n-N	Lets you instruct the program to Normalize the data points\n-r <NewName>	Lets you create a copy of the input file you select and then formats the output files to this name\n-h	Lets you display the help menu\n\nThe following are example calls\n./a.exe -f 2 -o 43 -S\n./a.exe -f 2 -s -2.5 -C\n./a.exe -f 11 -r NewName1 -N\n\nEven though you had some incorrect formatting we executed as many commands as possible\n");	
 	}
-	
+	return 0;
 
 } //end of main
 
@@ -388,7 +391,7 @@ void write_stats(char* file, int array[], int* length) {
 	fclose(fp);
 	return;
 }
-int isNumeric (const char * s)
+int isNumeric (const char * s)//determines if a given string is a numeric value or not, returns 0 if it is not and non-0 value if it is a numeric value.
 {
     if (s == NULL || *s == '\0' || isspace(*s))
       return 0;
